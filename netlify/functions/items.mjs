@@ -1,7 +1,6 @@
-import oracledb from "oracledb";
+import { getDatabase } from "@netlify/database";
 
 const headers = { "content-type": "application/json; charset=utf-8" };
-let poolPromise;
 
 function respond(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers });
@@ -43,30 +42,6 @@ async function readItem(request) {
   return { name: item.name.trim(), details: item.details?.trim() || null };
 }
 
-async function getPool() {
-  if (!process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_CONNECT_STRING) {
-    throw new Error("Database environment variables are not configured.");
-  }
-
-  if (!poolPromise) {
-    poolPromise = oracledb.createPool({
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      connectionString: process.env.DB_CONNECT_STRING,
-      poolMin: 0,
-      poolMax: 2,
-      poolIncrement: 1,
-    });
-  }
-
-  try {
-    return await poolPromise;
-  } catch (error) {
-    poolPromise = undefined;
-    throw error;
-  }
-}
-
 export default async function handler(request) {
   const method = request.method.toUpperCase();
   if (!["GET", "POST", "PUT", "DELETE"].includes(method)) {
@@ -84,56 +59,46 @@ export default async function handler(request) {
     return respond({ error: "A valid item id is required." }, 400);
   }
 
-  let connection;
   try {
-    const pool = await getPool();
-    connection = await pool.getConnection();
+    const db = getDatabase();
 
     if (method === "GET") {
-      const result = await connection.execute(
-        "SELECT ID, NAME, DETAILS, CREATED_AT FROM CLOUD_ITEMS ORDER BY CREATED_AT DESC, ID DESC",
-        [],
-        { outFormat: oracledb.OUT_FORMAT_OBJECT },
-      );
-      return respond(result.rows);
+      const items = await db.sql`
+        SELECT id, name, details, created_at
+        FROM cloud_items
+        ORDER BY created_at DESC, id DESC
+      `;
+      return respond(items);
     }
 
     if (method === "POST") {
-      await connection.execute(
-        "INSERT INTO CLOUD_ITEMS (NAME, DETAILS) VALUES (:name, :details)",
-        input,
-        { autoCommit: true },
-      );
+      await db.sql`
+        INSERT INTO cloud_items (name, details)
+        VALUES (${input.name}, ${input.details})
+      `;
       return respond({ ok: true }, 201);
     }
 
     if (method === "PUT") {
-      const result = await connection.execute(
-        "UPDATE CLOUD_ITEMS SET NAME = :name, DETAILS = :details WHERE ID = :id",
-        { ...input, id },
-        { autoCommit: true },
-      );
-      if (result.rowsAffected === 0) return respond({ error: "Item not found." }, 404);
+      const updated = await db.sql`
+        UPDATE cloud_items
+        SET name = ${input.name}, details = ${input.details}
+        WHERE id = ${id}
+        RETURNING id
+      `;
+      if (updated.length === 0) return respond({ error: "Item not found." }, 404);
       return respond({ ok: true });
     }
 
-    const result = await connection.execute(
-      "DELETE FROM CLOUD_ITEMS WHERE ID = :id",
-      { id },
-      { autoCommit: true },
-    );
-    if (result.rowsAffected === 0) return respond({ error: "Item not found." }, 404);
+    const deleted = await db.sql`
+      DELETE FROM cloud_items
+      WHERE id = ${id}
+      RETURNING id
+    `;
+    if (deleted.length === 0) return respond({ error: "Item not found." }, 404);
     return respond({ ok: true });
   } catch (error) {
     console.error("Items function failed", error);
     return respond({ error: "The database request failed. Check the function logs." }, 500);
-  } finally {
-    if (connection) {
-      try {
-        await connection.close();
-      } catch (error) {
-        console.error("Could not release database connection", error);
-      }
-    }
   }
 }

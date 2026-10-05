@@ -1,40 +1,39 @@
 # Fieldnotes
 
-A small Oracle-backed items workspace built with a static frontend and Netlify Functions.
+A small items workspace built with a static frontend, Netlify Functions, and Netlify Database (managed Postgres).
 
 ## What is included
 
 - `public/`: browser app, with search and add/edit/delete actions.
 - `netlify/functions/items.mjs`: server-side API for listing and changing items.
-- `db/001_create_cloud_items.sql`: Oracle table schema to run once in SQL Developer.
+- `netlify/database/migrations/20261005000000_create_cloud_items.sql`: schema migration applied by Netlify Database.
 - `netlify.toml`: Netlify publish directory and function settings.
 
-## 1. Create the Oracle table
+## 1. Enable Netlify Database
 
-Create an Oracle Autonomous Database in OCI and create an application database user. Connect to that database as the application user in Oracle SQL Developer, open `db/001_create_cloud_items.sql`, and run it once. The table is named `CLOUD_ITEMS`.
+Netlify Database is managed Postgres attached to your Netlify site. It is available on credit-based Netlify plans and database usage consumes credits.
 
-Use the TLS connection string from OCI for `DB_CONNECT_STRING`. The database network rules must permit connections from your Netlify Functions. Prefer TLS and restrict network access to Netlify static egress addresses when your Netlify plan supports them.
+From the project directory, install dependencies, authenticate/link the Netlify CLI to your site, and initialize its database:
+
+```sh
+npm install
+npx netlify-cli login
+npx netlify-cli link
+npx netlify-cli database init
+```
+
+Follow the CLI prompts to enable Netlify Database for the linked site. No Oracle account, SQL Developer, database password, or manually configured database environment variables are needed. Do not put database credentials in GitHub.
 
 ## 2. Deploy from GitHub to Netlify
 
-Push this repository to GitHub. In Netlify, choose **Add new site** and **Import an existing project**, authorize GitHub, and select this repository. Netlify reads `netlify.toml`; the publish directory is `public` and the function directory is `netlify/functions`.
-
-In the Netlify site's environment-variable settings, add:
-
-| Variable | Value |
-| --- | --- |
-| `DB_USER` | Oracle application username |
-| `DB_PASSWORD` | Oracle application password |
-| `DB_CONNECT_STRING` | Oracle TLS connection string from OCI |
-
-Save the variables and trigger a deploy. Never put actual credentials in GitHub or in browser code.
+Push the project to GitHub and connect the repository in Netlify. Netlify reads `netlify.toml`; the publish directory is `public` and the function directory is `netlify/functions`. Netlify applies database migrations from `netlify/database/migrations` during production deploys.
 
 ## 3. Use the app
 
-Open the Netlify site URL. The frontend calls `/.netlify/functions/items`; the function supports `GET`, `POST`, `PUT`, and `DELETE`. Use SQL Developer to query `CLOUD_ITEMS` directly and verify changes.
+Open the Netlify site URL. The frontend calls `/.netlify/functions/items`; the function supports `GET`, `POST`, `PUT`, and `DELETE`. For local development, run `npx netlify-cli dev`; Netlify provides a local Postgres database that is separate from production.
 
 ## Important security note
 
 This starter has no sign-in. Anyone who can reach the public site can read, add, edit, and delete its items. Do not use it for private or sensitive data until authentication and authorization have been added to the function.
 
-If the database connection fails, check the Netlify function logs, confirm all three environment variables, verify the TLS connection string, and check the Oracle network access rules.
+If the database connection fails, check that Netlify Database is enabled for the linked site, confirm the migration was applied, and inspect the Netlify function logs.

@@ -47,7 +47,7 @@ function renderItems() {
   itemsList.querySelectorAll(".item-row").forEach((row) => row.remove());
   const query = searchInput.value.trim().toLocaleLowerCase();
   const visibleItems = items.filter((item) =>
-    `${item.NAME} ${item.DETAILS || ""}`.toLocaleLowerCase().includes(query),
+    `${item.name} ${item.details || ""}`.toLocaleLowerCase().includes(query),
   );
 
   emptyState.hidden = visibleItems.length > 0;
@@ -61,9 +61,9 @@ function renderItems() {
     const row = document.createElement("article");
     row.className = "item-row";
     row.append(
-      makeCell("item-name", item.NAME),
-      makeCell("item-details", item.DETAILS),
-      makeCell("item-date", formatDate(item.CREATED_AT)),
+      makeCell("item-name", item.name),
+      makeCell("item-details", item.details),
+      makeCell("item-date", formatDate(item.created_at)),
     );
 
     const actions = document.createElement("div");
@@ -72,14 +72,14 @@ function renderItems() {
     editButton.className = "row-action";
     editButton.type = "button";
     editButton.textContent = "Edit";
-    editButton.setAttribute("aria-label", `Edit ${item.NAME}`);
+    editButton.setAttribute("aria-label", `Edit ${item.name}`);
     editButton.addEventListener("click", () => openDialog(item));
 
     const deleteButton = document.createElement("button");
     deleteButton.className = "row-action row-action-delete";
     deleteButton.type = "button";
     deleteButton.textContent = "Delete";
-    deleteButton.setAttribute("aria-label", `Delete ${item.NAME}`);
+    deleteButton.setAttribute("aria-label", `Delete ${item.name}`);
     deleteButton.addEventListener("click", () => deleteItem(item));
     actions.append(editButton, deleteButton);
     row.append(actions);
@@ -111,9 +111,9 @@ async function loadItems() {
 function openDialog(item = null) {
   form.reset();
   formError.textContent = "";
-  itemIdInput.value = item?.ID || "";
-  nameInput.value = item?.NAME || "";
-  detailsInput.value = item?.DETAILS || "";
+  itemIdInput.value = item?.id || "";
+  nameInput.value = item?.name || "";
+  detailsInput.value = item?.details || "";
   document.querySelector("#dialog-title").textContent = item ? "Edit item" : "Add an item";
   document.querySelector("#dialog-eyebrow").textContent = item ? "UPDATE ENTRY" : "NEW ENTRY";
   document.querySelector("#save-button").textContent = item ? "Save changes" : "Save item";
@@ -122,9 +122,9 @@ function openDialog(item = null) {
 }
 
 async function deleteItem(item) {
-  if (!window.confirm(`Delete “${item.NAME}”? This cannot be undone.`)) return;
+  if (!window.confirm(`Delete “${item.name}”? This cannot be undone.`)) return;
   try {
-    await request(`${apiUrl}?id=${encodeURIComponent(item.ID)}`, { method: "DELETE" });
+    await request(`${apiUrl}?id=${encodeURIComponent(item.id)}`, { method: "DELETE" });
     showToast("Item deleted");
     await loadItems();
   } catch (error) {

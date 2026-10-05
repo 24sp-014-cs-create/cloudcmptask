@@ -1,0 +1,6 @@
+CREATE TABLE cloud_items (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  details VARCHAR(4000),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
