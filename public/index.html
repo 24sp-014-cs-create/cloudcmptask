@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f2eb" />
+    <meta name="description" content="A simple Oracle-backed records workspace." />
+    <title>Fieldnotes | Items</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Fieldnotes home">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span>Fieldnotes</span>
+      </a>
+      <span class="topbar-label">WORKSPACE / ITEMS</span>
+      <span class="connection"><span class="connection-dot" id="connection-dot"></span><span id="connection-label">Connecting</span></span>
+    </header>
+
+    <main class="layout">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">YOUR DATABASE, AT A GLANCE</p>
+        <h1 id="page-title">Items<span class="title-period">.</span></h1>
+        <p class="intro-copy">A clear place to keep the details that matter.</p>
+      </section>
+
+      <section class="workspace" aria-label="Items workspace">
+        <div class="toolbar">
+          <label class="search-wrap" for="search-input">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="search-input" type="search" placeholder="Find an item" autocomplete="off" />
+            <kbd>/</kbd>
+          </label>
+          <button class="button button-quiet" id="refresh-button" type="button" title="Refresh items">
+            <span aria-hidden="true">↻</span><span class="button-label">Refresh</span>
+          </button>
+          <button class="button button-primary" id="add-button" type="button">
+            <span aria-hidden="true">+</span><span>Add item</span>
+          </button>
+        </div>
+
+        <div class="list-heading" aria-hidden="true">
+          <span>ITEM</span><span>DETAILS</span><span>ADDED</span><span></span>
+        </div>
+        <div class="items-list" id="items-list" aria-live="polite">
+          <div class="empty-state" id="empty-state">
+            <span class="empty-mark" aria-hidden="true">—</span>
+            <p>Loading your items</p>
+          </div>
+        </div>
+        <div class="list-footer">
+          <span id="item-count">0 items</span>
+          <span>STORED IN ORACLE</span>
+        </div>
+      </section>
+
+      <p class="page-note">Changes are saved directly to your database.</p>
+    </main>
+
+    <dialog class="item-dialog" id="item-dialog" aria-labelledby="dialog-title">
+      <form id="item-form">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow" id="dialog-eyebrow">NEW ENTRY</p>
+            <h2 id="dialog-title">Add an item</h2>
+          </div>
+          <button class="close-button" type="button" id="close-dialog" aria-label="Close dialog">×</button>
+        </div>
+        <input id="item-id" type="hidden" />
+        <label class="field-label" for="name-input">Name <span>REQUIRED</span></label>
+        <input class="text-field" id="name-input" name="name" maxlength="200" required placeholder="What would you like to remember?" />
+        <label class="field-label" for="details-input">Details <span>OPTIONAL</span></label>
+        <textarea class="text-field details-field" id="details-input" name="details" maxlength="4000" rows="4" placeholder="Add a note or useful context"></textarea>
+        <p class="form-error" id="form-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button class="button button-quiet" type="button" id="cancel-button">Cancel</button>
+          <button class="button button-primary" id="save-button" type="submit">Save item</button>
+        </div>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
